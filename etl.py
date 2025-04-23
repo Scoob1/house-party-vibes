@@ -51,7 +51,7 @@ def connect_db():
         database=os.getenv("MYSQL_DATABASE")
     )
 
-def insert_data(tracks):
+def insert_data(tracks, current_genre):
     db = connect_db()
     cursor = db.cursor(buffered=True)
 
@@ -59,7 +59,12 @@ def insert_data(tracks):
         artist_name = track["artists"][0]["name"]
         song_title = track["name"]
         genre = get_lastfm_genre(artist_name)
-        image_url = track["album"]["images"][0]["url"] if track["album"]["images"] else None
+        genre_from_lastfm = get_lastfm_genre(artist_name)
+        if genre_from_lastfm in ["mierda", "mexico", "unknown", ""] or not genre_from_lastfm:
+            genre = current_genre.lower()  # use the searched genre if Last.fm gives trash list
+        else:
+            genre = genre_from_lastfm
+            image_url = track["album"]["images"][0]["url"] if track["album"]["images"] else None
 
         cursor.execute("INSERT IGNORE INTO artists (name, genre, image_url) VALUES (%s, %s, %s)", 
                        (artist_name, genre, image_url))
@@ -76,6 +81,9 @@ def insert_data(tracks):
     db.close()
 
 if __name__ == "__main__":
-    tracks = get_spotify_tracks("reggaeton", limit=10)
-    insert_data(tracks)
+    genres = ["reggaeton", "house", "edm"]
+    for genre in genres:
+        print(f"Fetching tracks for genre: {genre}")
+        tracks = get_spotify_tracks(genre, limit=10)
+        insert_data(tracks, genre)
 
