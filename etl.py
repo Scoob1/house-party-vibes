@@ -53,7 +53,7 @@ def connect_db():
 
 def insert_data(tracks):
     db = connect_db()
-    cursor = db.cursor()
+    cursor = db.cursor(buffered=True)
 
     for track in tracks:
         artist_name = track["artists"][0]["name"]
